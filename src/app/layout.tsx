@@ -3,8 +3,13 @@ import "./globals.css";
 import ClientBody from "./ClientBody";
 
 export const metadata: Metadata = {
-  title: "OUTTERSPACE - Luxury Fashion",
-  description: "Outterspace Luxury redefines elegance with premium T-shirts, shirts, sunglasses, and fashion accessories. Where modern fashion meets timeless design.",
+  title: "KRYPTIC - Luxury Fashion",
+  description: "Kryptic redefines elegance with premium T-shirts, shirts, sunglasses, and fashion accessories. Where modern fashion meets timeless design.",
+  icons: {
+    icon: "/images/hero/logo.png",
+    shortcut: "/images/hero/logo.png",
+    apple: "/images/hero/logo.png",
+  },
 };
 
 export default function RootLayout({

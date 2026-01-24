@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import ProductSection from "@/components/ProductSection";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import MessageButton from "@/components/MessageButton";
 import SubscribeModal from "@/components/SubscribeModal";
 import {
@@ -58,8 +57,7 @@ export default function Home() {
       <Newsletter />
       <Footer />
 
-      {/* Floating Buttons */}
-      <WhatsAppButton />
+      {/* Floating Button */}
       <MessageButton />
 
       {/* Subscribe Modal */}

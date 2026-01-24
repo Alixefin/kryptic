@@ -14,12 +14,12 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="bg-[#c5dfe0] py-12 md:py-16">
+    <section className="bg-[var(--accent)] py-12 md:py-16 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Text */}
           <div className="text-center md:text-left">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#292826] leading-tight">
+            <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
               Never miss our updates about new arrivals
               <br />
               <span className="font-bold">and special offers</span>
@@ -35,14 +35,14 @@ export default function Newsletter() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="w-full px-4 py-3 border border-gray-300 bg-transparent focus:outline-none focus:border-gray-500 placeholder-gray-500"
+                  className="w-full px-4 py-3 border border-white/30 bg-white/10 text-white focus:outline-none focus:border-white placeholder-white/70"
                   required
                 />
                 <button
                   type="submit"
-                  className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center hover:bg-white/10 transition-colors"
                 >
-                  <ArrowRight className="h-5 w-5 text-[#292826]" />
+                  <ArrowRight className="h-5 w-5 text-white" />
                 </button>
               </div>
             </div>

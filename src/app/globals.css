@@ -1,25 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Dark theme (default) */
 :root {
-  --bg-primary: #fbfbfb;
-  --text-primary: #292826;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-card: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
   --accent: #7fb3b5;
   --accent-dark: #6a9a9c;
-  --sale-red: #993533;
+  --sale-red: #ef4444;
+  --border-color: #2a2a2a;
+  --gray-light: #818686;
+}
+
+/* Light theme */
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-card: #ffffff;
+  --text-primary: #0a0a0a;
+  --text-secondary: #6b7280;
+  --accent: #7fb3b5;
+  --accent-dark: #6a9a9c;
+  --sale-red: #dc2626;
+  --border-color: #e5e5e5;
   --gray-light: #818686;
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[var(--border-color)];
   }
 
   body {
-    @apply antialiased;
+    @apply antialiased transition-colors duration-300;
     font-family: 'Jost', sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -34,18 +53,21 @@
 @layer components {
   .nav-link {
     @apply text-sm font-medium transition-colors;
+    color: var(--text-primary);
   }
 
   .nav-link:hover {
-    @apply text-gray-500;
+    color: var(--text-secondary);
   }
 
   .btn-primary {
-    @apply bg-[#7fb3b5] text-white px-6 py-3 uppercase tracking-wider text-sm font-medium transition-colors;
+    @apply px-6 py-3 uppercase tracking-wider text-sm font-medium transition-colors;
+    background-color: var(--accent);
+    color: white;
   }
 
   .btn-primary:hover {
-    @apply bg-[#6a9a9c];
+    background-color: var(--accent-dark);
   }
 
   .product-card {
@@ -53,7 +75,8 @@
   }
 
   .product-image-container {
-    @apply relative overflow-hidden bg-white;
+    @apply relative overflow-hidden;
+    background-color: var(--bg-card);
   }
 
   .product-image {
@@ -61,11 +84,13 @@
   }
 
   .sale-badge {
-    @apply absolute top-2 left-2 bg-transparent text-[#993533] text-xs font-medium;
+    @apply absolute top-2 left-2 bg-transparent text-xs font-medium;
+    color: var(--sale-red);
   }
 
   .section-title {
     @apply text-2xl font-bold text-center mb-8 tracking-tight;
+    color: var(--text-primary);
   }
 }
 

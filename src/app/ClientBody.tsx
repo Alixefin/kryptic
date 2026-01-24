@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
+import CartDrawer from "@/components/CartDrawer";
 
 export default function ClientBody({
   children,
@@ -13,5 +17,16 @@ export default function ClientBody({
     document.body.className = "antialiased";
   }, []);
 
-  return <body className="antialiased">{children}</body>;
+  return (
+    <body className="antialiased">
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            {children}
+            <CartDrawer />
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </body>
+  );
 }
