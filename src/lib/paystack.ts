@@ -3,6 +3,17 @@
 // TODO: Move this to environment variables
 export const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
+export interface PaystackCustomField {
+  display_name: string;
+  variable_name: string;
+  value: string;
+}
+
+export interface PaystackMetadata {
+  custom_fields: PaystackCustomField[];
+  [key: string]: unknown;
+}
+
 export interface PaystackConfig {
   reference: string;
   email: string;
@@ -10,14 +21,7 @@ export interface PaystackConfig {
   publicKey: string;
   currency?: string;
   channels?: string[];
-  metadata?: {
-    custom_fields?: Array<{
-      display_name: string;
-      variable_name: string;
-      value: string;
-    }>;
-    [key: string]: unknown;
-  };
+  metadata?: PaystackMetadata;
 }
 
 /**
@@ -35,15 +39,22 @@ export function generateReference(): string {
 export function getPaystackConfig(
   email: string,
   amount: number,
-  metadata?: PaystackConfig["metadata"]
+  customFields?: PaystackCustomField[]
 ): PaystackConfig {
-  return {
+  const config: PaystackConfig = {
     reference: generateReference(),
     email,
     amount: amount * 100, // Convert Naira to kobo
     publicKey: PAYSTACK_PUBLIC_KEY,
     currency: "NGN",
     channels: ["card", "bank", "ussd", "bank_transfer"],
-    metadata,
   };
+
+  if (customFields && customFields.length > 0) {
+    config.metadata = {
+      custom_fields: customFields,
+    };
+  }
+
+  return config;
 }

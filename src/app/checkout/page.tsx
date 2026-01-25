@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatPrice } from "@/lib/currency";
-import { getPaystackConfig, generateReference } from "@/lib/paystack";
+import { getPaystackConfig } from "@/lib/paystack";
 import { NIGERIAN_STATES, getShippingRate, ShippingAddress } from "@/types/order";
 import { usePaystackPayment } from "react-paystack";
 import { ShoppingBag, Truck, CreditCard, CheckCircle } from "lucide-react";
@@ -75,12 +75,10 @@ export default function CheckoutPage() {
   const paystackConfig = getPaystackConfig(
     shippingAddress.email,
     total,
-    {
-      custom_fields: [
-        { display_name: "Customer Name", variable_name: "customer_name", value: `${shippingAddress.firstName} ${shippingAddress.lastName}` },
-        { display_name: "Phone", variable_name: "phone", value: shippingAddress.phone },
-      ],
-    }
+    [
+      { display_name: "Customer Name", variable_name: "customer_name", value: `${shippingAddress.firstName} ${shippingAddress.lastName}` },
+      { display_name: "Phone", variable_name: "phone", value: shippingAddress.phone },
+    ]
   );
 
   const onPaystackSuccess = (reference: { reference: string }) => {
