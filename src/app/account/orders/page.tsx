@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 import { formatPrice } from "@/lib/currency";
 import { Package, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
 
 // Mock orders data - will be replaced with actual data from Convex
 const mockOrders = [
@@ -37,16 +39,12 @@ const statusColors: Record<string, string> = {
 };
 
 export default function OrdersPage() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
+  const orders = useQuery(api.orders.getByUser, user ? { userId: user.id } : "skip");
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/account/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
+  const isLoading = orders === undefined;
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return (
       <main className="min-h-screen">
         <Header />
@@ -73,37 +71,39 @@ export default function OrdersPage() {
 
         <h1 className="text-3xl font-bold mb-8">Order History</h1>
 
-        {mockOrders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="text-center py-12 bg-[var(--bg-secondary)] rounded-lg">
             <Package className="w-16 h-16 text-[var(--text-secondary)] mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">No orders yet</h2>
             <p className="text-[var(--text-secondary)] mb-6">
               When you place orders, they will appear here.
             </p>
-            <Link href="/collections" className="btn-primary inline-block">
+            <Link href="/collections/all" className="btn-primary inline-block">
               Start Shopping
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
-            {mockOrders.map((order) => (
+            {orders.map((order) => (
               <div
-                key={order.id}
+                key={order._id}
                 className="bg-[var(--bg-secondary)] p-6 rounded-lg hover:bg-[var(--bg-card)] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <p className="font-mono text-sm text-[var(--text-secondary)]">{order.id}</p>
-                    <p className="font-medium mt-1">{order.items} item(s)</p>
-                    <p className="text-sm text-[var(--text-secondary)]">{order.date}</p>
+                    <p className="font-mono text-sm text-[var(--text-secondary)]">#{order._id.substring(0, 8)}...</p>
+                    <p className="font-medium mt-1">{order.items.length} item(s)</p>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      {new Date(order._creationTime).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status]}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status] || "bg-gray-500/20 text-gray-500"}`}>
                       {order.status}
                     </span>
                     <span className="font-bold">{formatPrice(order.total)}</span>
                     <Link
-                      href={`/account/orders/${order.id}`}
+                      href={`/account/orders/${order._id}`}
                       className="text-[var(--accent)] hover:underline text-sm"
                     >
                       View Details

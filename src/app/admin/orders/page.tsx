@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Eye, Filter, Clock } from "lucide-react";
+import { Search, Eye, Filter, Clock, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -22,6 +22,7 @@ const statusOptions: { value: OrderStatus; label: string }[] = [
 export default function AdminOrdersPage() {
   const orders = useQuery(api.orders.listAll);
   const updateStatus = useMutation(api.orders.updateStatus);
+  const deleteOrder = useMutation(api.orders.deleteOrder);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -32,6 +33,17 @@ export default function AdminOrdersPage() {
       await updateStatus({ id: orderId as Id<"orders">, status: newStatus });
     } catch (err) {
       console.error("Failed to update status:", err);
+    }
+  };
+
+  const handleDelete = async (orderId: string) => {
+    if (confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+      try {
+        await deleteOrder({ id: orderId as Id<"orders"> });
+      } catch (err) {
+        console.error("Failed to delete order:", err);
+        alert("Failed to delete order");
+      }
     }
   };
 
@@ -165,6 +177,13 @@ export default function AdminOrdersPage() {
                       >
                         <Eye className="w-4 h-4 text-slate-400 hover:text-white" />
                       </Link>
+                      <button
+                        onClick={() => handleDelete(order._id)}
+                        className="p-2 hover:bg-red-500/20 rounded-lg inline-flex ml-2"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+                      </button>
                     </td>
                   </tr>
                 ))}

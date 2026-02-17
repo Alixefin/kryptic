@@ -195,7 +195,22 @@ export const updateStatus = mutation({
         status: v.string(),
     },
     handler: async (ctx, args) => {
+        const order = await ctx.db.get(args.id);
+        if (!order) return;
+
         await ctx.db.patch(args.id, { status: args.status });
+
+        // Notify user if they have an account
+        if (order.userId) {
+            await ctx.scheduler.runAfter(0, internal.notifications.create, {
+                userId: order.userId,
+                type: "order_update",
+                title: "Order Updated",
+                message: `Your order #${order._id.substring(0, 8)} status has been updated to ${args.status}.`,
+                link: `/account/orders/${order._id}`,
+                recipient: "user",
+            });
+        }
     },
 });
 
@@ -206,6 +221,73 @@ export const updatePaymentStatus = mutation({
         paymentStatus: v.string(),
     },
     handler: async (ctx, args) => {
+        const order = await ctx.db.get(args.id);
+        if (!order) return;
+
         await ctx.db.patch(args.id, { paymentStatus: args.paymentStatus });
+
+        // Notify user
+        if (order.userId) {
+            await ctx.scheduler.runAfter(0, internal.notifications.create, {
+                userId: order.userId,
+                type: "order_update",
+                title: "Payment Update",
+                message: `Payment status for order #${order._id.substring(0, 8)} updated to ${args.paymentStatus}.`,
+                link: `/account/orders/${order._id}`,
+                recipient: "user",
+            });
+        }
+    },
+});
+
+// Clear all orders (DEV ONLY - BE CAREFUL)
+export const clearAll = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const orders = await ctx.db.query("orders").collect();
+        const orderItems = await ctx.db.query("orderItems").collect();
+
+        for (const order of orders) {
+            await ctx.db.delete(order._id);
+        }
+
+        for (const item of orderItems) {
+            await ctx.db.delete(item._id);
+        }
+    },
+});
+
+// Delete a single order (admin)
+export const deleteOrder = mutation({
+    args: { id: v.id("orders") },
+    handler: async (ctx, args) => {
+        const order = await ctx.db.get(args.id);
+        if (!order) return;
+
+        // Notify user BEFORE deletion if possible (or just notify them generally)
+        // Since the order link won't work after deletion, point to orders list or show a static message
+        if (order.userId) {
+            await ctx.scheduler.runAfter(0, internal.notifications.create, {
+                userId: order.userId,
+                type: "order_update",
+                title: "Order Cancelled",
+                message: `Your order #${order._id.substring(0, 8)} has been cancelled and removed.`,
+                link: `/account/orders`,
+                recipient: "user",
+            });
+        }
+
+        // Delete the order itself
+        await ctx.db.delete(args.id);
+
+        // Delete associated order items
+        const items = await ctx.db
+            .query("orderItems")
+            .withIndex("by_orderId", (q) => q.eq("orderId", args.id))
+            .collect();
+
+        for (const item of items) {
+            await ctx.db.delete(item._id);
+        }
     },
 });

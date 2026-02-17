@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Package, Truck, User, MapPin, CreditCard, Clock } from "lucide-react";
+import { ArrowLeft, Package, Truck, User, MapPin, CreditCard, Clock, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -34,6 +34,8 @@ export default function OrderDetailPage() {
         orderId ? { id: orderId as Id<"orders"> } : "skip"
     );
     const updateStatus = useMutation(api.orders.updateStatus);
+    const deleteOrder = useMutation(api.orders.deleteOrder);
+    const router = useRouter();
 
     const isLoading = order === undefined;
 
@@ -43,6 +45,19 @@ export default function OrderDetailPage() {
             await updateStatus({ id: order._id, status: newStatus });
         } catch (err) {
             console.error("Failed to update status:", err);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!order) return;
+        if (confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+            try {
+                await deleteOrder({ id: order._id });
+                router.push("/admin/orders");
+            } catch (err) {
+                console.error("Failed to delete order:", err);
+                alert("Failed to delete order");
+            }
         }
     };
 
@@ -115,6 +130,13 @@ export default function OrderDetailPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleDelete}
+                        className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                        title="Delete Order"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize border ${paymentStatusColors[order.paymentStatus] || "bg-slate-500/20 text-slate-400 border-slate-500/30"}`}>
                         {order.paymentStatus}
                     </span>

@@ -123,6 +123,7 @@ export const sendOrderConfirmation = internalAction({
       html: `
         <div style="font-family: 'Helvetica', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; padding: 40px; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://krypticlab.com/images/logo.png" alt="KRYPTIC" style="width: 60px; height: 60px; margin-bottom: 10px;" />
             <h1 style="font-size: 28px; font-weight: bold; color: #fff; letter-spacing: 4px; margin: 0;">KRYPTIC</h1>
             <p style="color: #10b981; margin-top: 4px; font-size: 14px; font-weight: 600;">Order Confirmed</p>
           </div>
