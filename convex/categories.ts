@@ -46,6 +46,8 @@ export const create = mutation({
         name: v.string(),
         slug: v.string(),
         description: v.optional(v.string()),
+        imageStorageId: v.optional(v.id("_storage")),
+        imageUrl: v.optional(v.string()),
         active: v.boolean(),
     },
     handler: async (ctx, args) => {
@@ -56,7 +58,12 @@ export const create = mutation({
 
         if (existing) throw new Error("Category slug already exists");
 
-        await ctx.db.insert("categories", args);
+        let imageUrl = args.imageUrl;
+        if (args.imageStorageId) {
+            imageUrl = (await ctx.storage.getUrl(args.imageStorageId)) ?? undefined;
+        }
+
+        await ctx.db.insert("categories", { ...args, imageUrl });
     },
 });
 
@@ -67,10 +74,17 @@ export const update = mutation({
         name: v.optional(v.string()),
         slug: v.optional(v.string()),
         description: v.optional(v.string()),
+        imageStorageId: v.optional(v.id("_storage")),
+        imageUrl: v.optional(v.string()),
         active: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const { id, ...updates } = args;
+
+        if (updates.imageStorageId) {
+            updates.imageUrl = (await ctx.storage.getUrl(updates.imageStorageId)) ?? undefined;
+        }
+
         await ctx.db.patch(id, updates);
     },
 });

@@ -114,6 +114,8 @@ const schema = defineSchema({
         name: v.string(),
         slug: v.string(),
         description: v.optional(v.string()),
+        imageStorageId: v.optional(v.id("_storage")),
+        imageUrl: v.optional(v.string()),
         active: v.boolean(),
     }).index("by_slug", ["slug"]),
 

@@ -43,7 +43,11 @@ export default function Header() {
 
   const activeCategories = useQuery(api.categories.listActive);
   const collections = activeCategories
-    ? activeCategories.map(c => ({ name: c.name.toUpperCase(), href: `/collections/${c.slug}` }))
+    ? activeCategories.map(c => ({
+      name: c.name.toUpperCase(),
+      href: `/collections/${c.slug}`,
+      image: c.imageUrl
+    }))
     : [];
 
   const handleMarkAllRead = async () => {
@@ -106,14 +110,21 @@ export default function Header() {
               </button>
 
               {isCollectionsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-lg py-2">
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-lg p-2 grid grid-cols-1 gap-1">
                   {collections.map((collection) => (
                     <Link
                       key={collection.name}
                       href={collection.href}
-                      className="block px-4 py-2 text-sm hover:bg-[var(--bg-card)] transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-[var(--bg-card)] transition-colors rounded-lg"
                     >
-                      {collection.name}
+                      {collection.image ? (
+                        <div className="w-8 h-8 rounded bg-slate-700 overflow-hidden flex-shrink-0">
+                          <Image src={collection.image} alt={collection.name} width={32} height={32} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-slate-700 flex-shrink-0" />
+                      )}
+                      <span className="font-medium">{collection.name}</span>
                     </Link>
                   ))}
                 </div>
@@ -133,70 +144,72 @@ export default function Header() {
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
+            <div className="hidden md:flex items-center space-x-4">
+              <ThemeToggle />
 
-            {/* Notifications */}
-            {user && (
-              <div className="relative">
-                <button
-                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                  className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors relative text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-primary)]"></span>
-                  )}
-                </button>
+              {/* Notifications */}
+              {user && (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                    className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors relative text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-primary)]"></span>
+                    )}
+                  </button>
 
-                {isNotificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
-                    <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]">
-                      <h3 className="font-semibold text-sm">Notifications</h3>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={handleMarkAllRead}
-                          className="text-xs text-[var(--accent)] hover:text-emerald-400 flex items-center gap-1"
-                        >
-                          <Check className="w-3 h-3" /> Mark all read
-                        </button>
-                      )}
-                    </div>
-                    <div className="max-h-[300px] overflow-y-auto">
-                      {unreadCount === 0 ? (
-                        <div className="p-8 text-center text-[var(--text-secondary)]">
-                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No new notifications</p>
-                        </div>
-                      ) : (
-                        notifications?.map((notif) => (
-                          <Link
-                            href={notif.link || "/account/orders"}
-                            key={notif._id}
-                            onClick={() => setIsNotificationsOpen(false)}
-                            className="block p-4 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-color)] last:border-0"
+                  {isNotificationsOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
+                      <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]">
+                        <h3 className="font-semibold text-sm">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-xs text-[var(--accent)] hover:text-emerald-400 flex items-center gap-1"
                           >
-                            <div className="flex gap-3">
-                              <div className="w-2 h-2 mt-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium">{notif.title}</p>
-                                <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2">{notif.message}</p>
-                                <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-70">
-                                  {new Date(notif._creationTime).toLocaleTimeString()}
-                                </p>
+                            <Check className="w-3 h-3" /> Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {unreadCount === 0 ? (
+                          <div className="p-8 text-center text-[var(--text-secondary)]">
+                            <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No new notifications</p>
+                          </div>
+                        ) : (
+                          notifications?.map((notif) => (
+                            <Link
+                              href={notif.link || "/account/orders"}
+                              key={notif._id}
+                              onClick={() => setIsNotificationsOpen(false)}
+                              className="block p-4 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-color)] last:border-0"
+                            >
+                              <div className="flex gap-3">
+                                <div className="w-2 h-2 mt-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-medium">{notif.title}</p>
+                                  <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2">{notif.message}</p>
+                                  <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-70">
+                                    {new Date(notif._creationTime).toLocaleTimeString()}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </Link>
-                        ))
-                      )}
+                            </Link>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            <Link href="/account" className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors">
-              <User className="h-5 w-5" />
-            </Link>
+              <Link href="/account" className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            </div>
 
             <button
               onClick={toggleCart}
@@ -245,8 +258,13 @@ export default function Header() {
                     <Link
                       key={collection.name}
                       href={collection.href}
-                      className={`block py-1 text-sm ${pathname === collection.href ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
+                      className={`flex items-center gap-3 py-2 text-sm ${pathname === collection.href ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
                     >
+                      {collection.image && (
+                        <div className="w-8 h-8 rounded bg-slate-700 overflow-hidden flex-shrink-0">
+                          <Image src={collection.image} alt={collection.name} width={32} height={32} className="w-full h-full object-cover" />
+                        </div>
+                      )}
                       {collection.name}
                     </Link>
                   ))}
@@ -262,6 +280,73 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
+
+            {/* Mobile Menu Icons Row */}
+            <div className="border-t border-[var(--border-color)] pt-4 mt-4 flex items-center justify-around">
+              <ThemeToggle />
+
+              {/* Mobile Notifications */}
+              {user && (
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors relative text-[var(--text-secondary)]"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-primary)]"></span>
+                  )}
+                </button>
+              )}
+
+              <Link href="/account" className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors text-[var(--text-secondary)]">
+                <User className="h-5 w-5" />
+              </Link>
+            </div>
+
+            {/* Render Notifications Dropdown in Mobile if Open */}
+            {isNotificationsOpen && user && (
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden mt-2">
+                <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]">
+                  <h3 className="font-semibold text-sm">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-xs text-[var(--accent)] hover:text-emerald-400 flex items-center gap-1"
+                    >
+                      <Check className="w-3 h-3" /> Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[300px] overflow-y-auto">
+                  {unreadCount === 0 ? (
+                    <div className="p-8 text-center text-[var(--text-secondary)]">
+                      <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No new notifications</p>
+                    </div>
+                  ) : (
+                    notifications?.map((notif) => (
+                      <Link
+                        href={notif.link || "/account/orders"}
+                        key={notif._id}
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="block p-4 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-color)] last:border-0"
+                      >
+                        <div className="flex gap-3">
+                          <div className="w-2 h-2 mt-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">{notif.title}</p>
+                            <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2">{notif.message}</p>
+                            <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-70">
+                              {new Date(notif._creationTime).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </nav>
         </div>
       )}

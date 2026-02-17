@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Edit2, Trash2, Folder, X, Save, Check, Ban } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Folder, X, Save, Check, Ban, Upload } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
@@ -11,12 +11,16 @@ export default function AdminCategoriesPage() {
     const createCategory = useMutation(api.categories.create);
     const updateCategory = useMutation(api.categories.update);
     const deleteCategory = useMutation(api.categories.remove);
+    const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<Id<"categories"> | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>("");
 
     const [formData, setFormData] = useState({
         name: "",
@@ -27,6 +31,8 @@ export default function AdminCategoriesPage() {
 
     const resetForm = () => {
         setFormData({ name: "", slug: "", description: "", active: true });
+        setImageFile(null);
+        setImagePreview("");
         setEditingId(null);
         setError("");
         setIsModalOpen(false);
@@ -39,6 +45,7 @@ export default function AdminCategoriesPage() {
             description: category.description || "",
             active: category.active,
         });
+        setImagePreview(category.imageUrl || "");
         setEditingId(category._id);
         setIsModalOpen(true);
     };
@@ -58,12 +65,25 @@ export default function AdminCategoriesPage() {
         setError("");
 
         try {
+            let imageStorageId = undefined;
+            if (imageFile) {
+                const uploadUrl = await generateUploadUrl();
+                const result = await fetch(uploadUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": imageFile.type },
+                    body: imageFile,
+                });
+                const { storageId } = await result.json();
+                imageStorageId = storageId;
+            }
+
             if (editingId) {
                 await updateCategory({
                     id: editingId,
                     name: formData.name,
                     slug: formData.slug,
                     description: formData.description || undefined,
+                    imageStorageId,
                     active: formData.active,
                 });
             } else {
@@ -71,6 +91,7 @@ export default function AdminCategoriesPage() {
                     name: formData.name,
                     slug: formData.slug,
                     description: formData.description || undefined,
+                    imageStorageId,
                     active: formData.active,
                 });
             }
@@ -149,9 +170,16 @@ export default function AdminCategoriesPage() {
                             </tr>
                         ) : filteredCategories.map((cat) => (
                             <tr key={cat._id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                                <td className="p-4 flex items-center gap-2 font-medium text-white">
-                                    <Folder className="w-4 h-4 text-slate-500" />
-                                    {cat.name}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-700 overflow-hidden flex-shrink-0">
+                                            {cat.imageUrl ? (
+                                                <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Folder className="w-5 h-5 text-slate-500 m-auto mt-2.5" />
+                                            )}
+                                        </div>
+                                        <span className="font-medium text-white">{cat.name}</span>
+                                    </div>
                                 </td>
                                 <td className="p-4 text-slate-400">{cat.slug}</td>
                                 <td className="p-4 text-slate-400 truncate max-w-xs">{cat.description || "-"}</td>
@@ -179,101 +207,140 @@ export default function AdminCategoriesPage() {
                                 </td>
                             </tr>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                </tbody>
+            </table>
+        </div>
 
-            {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl">
-                        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-white">
-                                {editingId ? "Edit Category" : "Add Category"}
-                            </h2>
-                            <button onClick={resetForm} className="text-slate-400 hover:text-white">
-                                <X className="w-5 h-5" />
-                            </button>
+            {/* Modal */ }
+    {
+        isModalOpen && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl">
+                    <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-white">
+                            {editingId ? "Edit Category" : "Add Category"}
+                        </h2>
+                        <button onClick={resetForm} className="text-slate-400 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        {error && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5 text-slate-300">Category Image</label>
+                            <div className="flex items-center gap-4">
+                                <div className="relative w-20 h-20 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center overflow-hidden">
+                                    {imagePreview ? (
+                                        <>
+                                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => { setImageFile(null); setImagePreview(""); }}
+                                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-6 h-6 text-white" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <Upload className="w-8 h-8 text-slate-500" />
+                                    )}
+                                </div>
+                                <label className="btn-secondary cursor-pointer">
+                                    Upload Image
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setImageFile(file);
+                                                setImagePreview(URL.createObjectURL(file));
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            {error && (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm">
-                                    {error}
-                                </div>
-                            )}
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5 text-slate-300">Name</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.name}
+                                onChange={(e) => handleNameChange(e.target.value)}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none"
+                                placeholder="e.g. T-Shirts"
+                            />
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1.5 text-slate-300">Name</label>
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5 text-slate-300">Slug</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.slug}
+                                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none font-mono text-sm"
+                                placeholder="e.g. t-shirts"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5 text-slate-300">Description</label>
+                            <textarea
+                                rows={3}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none resize-none"
+                                placeholder="Optional description..."
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
                                 <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => handleNameChange(e.target.value)}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none"
-                                    placeholder="e.g. T-Shirts"
+                                    type="checkbox"
+                                    checked={formData.active}
+                                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                                    className="w-5 h-5 rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
                                 />
-                            </div>
+                                <span className="text-white">Active</span>
+                            </label>
+                            <p className="text-xs text-slate-500">
+                                Inactive categories are hidden from the store.
+                            </p>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1.5 text-slate-300">Slug</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.slug}
-                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none font-mono text-sm"
-                                    placeholder="e.g. t-shirts"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1.5 text-slate-300">Description</label>
-                                <textarea
-                                    rows={3}
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 outline-none resize-none"
-                                    placeholder="Optional description..."
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.active}
-                                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                        className="w-5 h-5 rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
-                                    />
-                                    <span className="text-white">Active</span>
-                                </label>
-                                <p className="text-xs text-slate-500">
-                                    Inactive categories are hidden from the store.
-                                </p>
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                    {editingId ? "Save Changes" : "Create Category"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        <div className="pt-4 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={resetForm}
+                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                {editingId ? "Save Changes" : "Create Category"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            )}
-        </div>
+            </div>
+        )
+    }
+        </div >
     );
 }
