@@ -33,7 +33,7 @@ export default function AddressesPage() {
   return (
     <main className="min-h-screen">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center gap-2 mb-8">
           <Link href="/account" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
@@ -51,42 +51,18 @@ export default function AddressesPage() {
           </button>
         </div>
 
-        {/* Address List */}
-        {user?.address ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-[var(--bg-secondary)] p-6 rounded-lg border-2 border-[var(--accent)]">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[var(--accent)]" />
-                  <span className="font-medium">Default Address</span>
-                </div>
-                <span className="text-xs bg-[var(--accent)] text-white px-2 py-1 rounded">Default</span>
-              </div>
-              <p className="text-[var(--text-secondary)]">
-                {user.firstName} {user.lastName}<br />
-                {user.address.street}<br />
-                {user.address.city}, {user.address.state}<br />
-                {user.address.country}
-              </p>
-              <div className="flex gap-4 mt-4">
-                <button className="text-sm text-[var(--accent)] hover:underline">Edit</button>
-                <button className="text-sm text-[var(--sale-red)] hover:underline">Delete</button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-[var(--bg-secondary)] rounded-lg">
-            <MapPin className="w-16 h-16 text-[var(--text-secondary)] mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">No saved addresses</h2>
-            <p className="text-[var(--text-secondary)] mb-6">
-              Add a shipping address to make checkout faster.
-            </p>
-            <button className="btn-primary inline-flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Add Your First Address
-            </button>
-          </div>
-        )}
+        {/* Address List - TODO: Wire up address management to backend */}
+        <div className="text-center py-12 bg-[var(--bg-secondary)] rounded-lg">
+          <MapPin className="w-16 h-16 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">No saved addresses</h2>
+          <p className="text-[var(--text-secondary)] mb-6">
+            Add a shipping address to make checkout faster.
+          </p>
+          <button className="btn-primary inline-flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add Your First Address
+          </button>
+        </div>
       </div>
 
       <Footer />
