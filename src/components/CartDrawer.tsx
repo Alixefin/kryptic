@@ -60,12 +60,12 @@ export default function CartDrawer() {
             <div className="space-y-4">
               {items.map((item) => (
                 <div
-                  key={`${item.product.id}-${item.size}-${item.color}`}
+                  key={`${item.product._id}-${item.size}-${item.color}`}
                   className="flex gap-4 p-3 bg-[var(--bg-secondary)] rounded-lg"
                 >
                   {/* Product Image */}
                   <div className="relative w-20 h-20 bg-[var(--bg-card)] rounded-lg overflow-hidden flex-shrink-0">
-                    {item.product.image.includes("placeholder") ? (
+                    {!item.product.imageUrl || item.product.imageUrl.includes("placeholder") ? (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <svg
                           className="w-8 h-8 text-[var(--text-secondary)]"
@@ -83,7 +83,7 @@ export default function CartDrawer() {
                       </div>
                     ) : (
                       <Image
-                        src={item.product.image}
+                        src={item.product.imageUrl || ""}
                         alt={item.product.name}
                         fill
                         className="object-cover"
@@ -107,21 +107,21 @@ export default function CartDrawer() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center border border-[var(--border-color)] rounded">
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
                           className="p-1 hover:bg-[var(--bg-card)] transition-colors"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="px-3 text-sm">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
                           className="p-1 hover:bg-[var(--bg-card)] transition-colors"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.product.id)}
+                        onClick={() => removeItem(item.product._id)}
                         className="p-1 text-[var(--sale-red)] hover:bg-[var(--bg-card)] rounded transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />

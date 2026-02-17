@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/currency";
 import { Package, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-// Mock orders data - will be replaced with actual data from Supabase
+// Mock orders data - will be replaced with actual data from Convex
 const mockOrders = [
   {
     id: "KRP-1706093100000-ABC123",
@@ -61,7 +61,7 @@ export default function OrdersPage() {
   return (
     <main className="min-h-screen">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center gap-2 mb-8">
           <Link href="/account" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">

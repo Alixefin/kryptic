@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { Product } from "@/data/products";
+import type { Product } from "@/lib/products";
 
 export interface CartItem {
   product: Product;
@@ -57,17 +57,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = useCallback((product: Product, quantity = 1, size?: string, color?: string) => {
     setItems((currentItems) => {
       const existingItemIndex = currentItems.findIndex(
-        (item) => item.product.id === product.id && item.size === size && item.color === color
+        (item) => item.product._id === product._id && item.size === size && item.color === color
       );
 
       if (existingItemIndex > -1) {
-        // Update quantity if item exists
         const updatedItems = [...currentItems];
         updatedItems[existingItemIndex].quantity += quantity;
         return updatedItems;
       }
 
-      // Add new item
       return [...currentItems, { product, quantity, size, color }];
     });
     setIsCartOpen(true);
@@ -75,7 +73,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeItem = useCallback((productId: string) => {
     setItems((currentItems) =>
-      currentItems.filter((item) => item.product.id !== productId)
+      currentItems.filter((item) => item.product._id !== productId)
     );
   }, []);
 
@@ -87,7 +85,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     setItems((currentItems) =>
       currentItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        item.product._id === productId ? { ...item, quantity } : item
       )
     );
   }, [removeItem]);
@@ -108,7 +106,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   const isInCart = useCallback((productId: string) => {
-    return items.some((item) => item.product.id === productId);
+    return items.some((item) => item.product._id === productId);
   }, [items]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);

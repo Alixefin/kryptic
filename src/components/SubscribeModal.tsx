@@ -8,9 +8,13 @@ export default function SubscribeModal() {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    // Show modal after 2 seconds
+    // Only show if user hasn't seen it before
+    const hasSeenModal = localStorage.getItem("kryptic_subscribe_shown");
+    if (hasSeenModal) return;
+
     const timer = setTimeout(() => {
       setIsOpen(true);
+      localStorage.setItem("kryptic_subscribe_shown", "true");
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -19,6 +23,7 @@ export default function SubscribeModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Subscribing:", email);
+    localStorage.setItem("kryptic_subscribed", "true");
     setIsOpen(false);
   };
 

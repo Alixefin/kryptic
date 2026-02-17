@@ -32,10 +32,10 @@ export default function AdminSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
-    // TODO: Save to Supabase
+
+    // TODO: Save to Convex
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     setIsSaving(false);
   };
 
@@ -61,11 +61,10 @@ export default function AdminSettingsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                activeTab === tab.id
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${activeTab === tab.id
                   ? "bg-[var(--accent)] text-white"
                   : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)]"
-              }`}
+                }`}
             >
               <tab.icon className="w-5 h-5" />
               {tab.name}

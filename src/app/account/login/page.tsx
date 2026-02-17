@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -14,8 +14,19 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { login, user, isLoading, isAdmin } = useAuth();
   const router = useRouter();
+
+  // After login succeeds and user data loads, redirect based on role
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
+    }
+  }, [user, isLoading, isAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,19 +35,17 @@ export default function LoginPage() {
 
     const result = await login(email, password);
 
-    if (result.success) {
-      router.push("/account");
-    } else {
+    if (!result.success) {
       setError(result.error || "Login failed");
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
+    // On success, the useEffect above handles redirect once user data loads
   };
 
   return (
     <main className="min-h-screen">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-center mb-2">Welcome Back</h1>

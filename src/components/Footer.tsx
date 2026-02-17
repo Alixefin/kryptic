@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Facebook, Instagram } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 const shopLinks = [
   { name: "Home", href: "/" },
@@ -13,6 +14,11 @@ const shopLinks = [
 ];
 
 export default function Footer() {
+  const { theme } = useTheme();
+  const logoSrc = theme === "dark"
+    ? "/images/hero/logo-dark.png"
+    : "/images/hero/logo-light.png";
+
   return (
     <footer className="bg-[var(--bg-primary)] border-t border-[var(--border-color)] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -21,13 +27,13 @@ export default function Footer() {
           <div className="space-y-4">
             <Link href="/" className="inline-flex items-center gap-2">
               <Image
-                src="/images/hero/logo.png"
+                src={logoSrc}
                 alt="KRYPTIC"
                 width={40}
                 height={40}
                 className="h-10 w-auto"
               />
-              <span 
+              <span
                 className="text-xl font-bold tracking-wider"
                 style={{ fontFamily: "'Orbitron', sans-serif" }}
               >

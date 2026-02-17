@@ -8,6 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatPrice } from "@/lib/currency";
 import { getPaystackConfig } from "@/lib/paystack";
+import { createOrder } from "@/lib/orders";
 import { NIGERIAN_STATES, getShippingRate, ShippingAddress } from "@/types/order";
 import { usePaystackPayment } from "react-paystack";
 import { ShoppingBag, Truck, CreditCard, CheckCircle } from "lucide-react";
@@ -19,7 +20,7 @@ export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  
+
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     firstName: user?.firstName || "",
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderReference, setOrderReference] = useState("");
+  const [orderError, setOrderError] = useState("");
 
   const subtotal = getSubtotal();
   const shippingCost = shippingAddress.state ? getShippingRate(shippingAddress.state) : 0;
@@ -81,14 +83,35 @@ export default function CheckoutPage() {
     ]
   );
 
-  const onPaystackSuccess = (reference: { reference: string }) => {
+  const onPaystackSuccess = async (reference: { reference: string }) => {
     setOrderReference(reference.reference);
-    setOrderComplete(true);
-    setCurrentStep("confirmation");
-    clearCart();
-    
-    // TODO: Save order to database
-    console.log("Payment successful:", reference);
+    setOrderError("");
+
+    // Save order to database
+    const result = await createOrder({
+      items,
+      shippingAddress,
+      subtotal,
+      shipping: shippingCost,
+      total,
+      paymentReference: reference.reference,
+      userId: user?.id,
+    });
+
+    if (result.success) {
+      setOrderComplete(true);
+      setCurrentStep("confirmation");
+      clearCart();
+      console.log("Order created successfully:", result.order);
+    } else {
+      // Payment succeeded but order save failed - still show confirmation
+      // but log the error for admin review
+      console.error("Order save failed:", result.error);
+      setOrderError("Payment successful, but there was an issue saving your order. Please contact support with reference: " + reference.reference);
+      setOrderComplete(true);
+      setCurrentStep("confirmation");
+      clearCart();
+    }
   };
 
   const onPaystackClose = () => {
@@ -113,7 +136,7 @@ export default function CheckoutPage() {
   return (
     <main className="min-h-screen">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
@@ -145,7 +168,7 @@ export default function CheckoutPage() {
             {currentStep === "shipping" && (
               <div className="bg-[var(--bg-secondary)] p-6 rounded-lg">
                 <h2 className="text-xl font-bold mb-6">Shipping Information</h2>
-                
+
                 {!isAuthenticated && (
                   <div className="bg-[var(--bg-card)] p-4 rounded-lg mb-6">
                     <p className="text-sm text-[var(--text-secondary)]">
@@ -260,7 +283,7 @@ export default function CheckoutPage() {
             {currentStep === "payment" && (
               <div className="bg-[var(--bg-secondary)] p-6 rounded-lg">
                 <h2 className="text-xl font-bold mb-6">Payment</h2>
-                
+
                 <div className="bg-[var(--bg-card)] p-4 rounded-lg mb-6">
                   <h3 className="font-medium mb-2">Shipping To:</h3>
                   <p className="text-[var(--text-secondary)]">
@@ -281,7 +304,7 @@ export default function CheckoutPage() {
                   <p className="text-[var(--text-secondary)]">
                     Click the button below to pay securely with Paystack. You can pay with your card, bank transfer, or USSD.
                   </p>
-                  
+
                   <button
                     onClick={handlePayment}
                     disabled={isProcessing}
@@ -316,6 +339,11 @@ export default function CheckoutPage() {
                 <p className="text-[var(--text-secondary)] mb-4">
                   Thank you for your purchase. Your order has been received and is being processed.
                 </p>
+                {orderError && (
+                  <div className="bg-yellow-500/10 border border-yellow-500 text-yellow-600 dark:text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">
+                    {orderError}
+                  </div>
+                )}
                 <p className="text-sm text-[var(--text-secondary)] mb-6">
                   Order Reference: <span className="font-mono font-medium text-[var(--text-primary)]">{orderReference}</span>
                 </p>

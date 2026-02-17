@@ -2,203 +2,180 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Eye, ChevronDown } from "lucide-react";
+import { Search, Eye, Filter, Clock } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
-// Mock data - will be replaced with Supabase data
-const mockOrders = [
-  { 
-    id: "KRP-001", 
-    customer: "John Doe", 
-    email: "john@example.com", 
-    phone: "+234 801 234 5678",
-    total: 45000, 
-    items: 2,
-    status: "delivered",
-    paymentStatus: "paid",
-    date: "2026-01-24",
-    address: "123 Main Street, Lekki, Lagos"
-  },
-  { 
-    id: "KRP-002", 
-    customer: "Jane Smith", 
-    email: "jane@example.com", 
-    phone: "+234 802 345 6789",
-    total: 32000, 
-    items: 1,
-    status: "shipped",
-    paymentStatus: "paid",
-    date: "2026-01-24",
-    address: "456 Oak Avenue, Victoria Island, Lagos"
-  },
-  { 
-    id: "KRP-003", 
-    customer: "Bob Wilson", 
-    email: "bob@example.com", 
-    phone: "+234 803 456 7890",
-    total: 78500, 
-    items: 3,
-    status: "processing",
-    paymentStatus: "paid",
-    date: "2026-01-23",
-    address: "789 Pine Road, Ikeja, Lagos"
-  },
-  { 
-    id: "KRP-004", 
-    customer: "Alice Brown", 
-    email: "alice@example.com", 
-    phone: "+234 804 567 8901",
-    total: 25000, 
-    items: 1,
-    status: "pending",
-    paymentStatus: "pending",
-    date: "2026-01-23",
-    address: "321 Elm Street, Yaba, Lagos"
-  },
-  { 
-    id: "KRP-005", 
-    customer: "Charlie Davis", 
-    email: "charlie@example.com", 
-    phone: "+234 805 678 9012",
-    total: 56000, 
-    items: 2,
-    status: "confirmed",
-    paymentStatus: "paid",
-    date: "2026-01-22",
-    address: "654 Maple Drive, Surulere, Lagos"
-  },
+type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+
+const statusOptions: { value: OrderStatus; label: string }[] = [
+  { value: "pending", label: "Pending" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "processing", label: "Processing" },
+  { value: "shipped", label: "Shipped" },
+  { value: "delivered", label: "Delivered" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
-const statusOptions = ["all", "pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
-
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500/20 text-yellow-500",
-  confirmed: "bg-blue-500/20 text-blue-500",
-  processing: "bg-purple-500/20 text-purple-500",
-  shipped: "bg-cyan-500/20 text-cyan-500",
-  delivered: "bg-green-500/20 text-green-500",
-  cancelled: "bg-red-500/20 text-red-500",
-};
-
-const paymentStatusColors: Record<string, string> = {
-  pending: "bg-yellow-500/20 text-yellow-500",
-  paid: "bg-green-500/20 text-green-500",
-  failed: "bg-red-500/20 text-red-500",
-  refunded: "bg-gray-500/20 text-gray-500",
-};
-
 export default function AdminOrdersPage() {
+  const orders = useQuery(api.orders.listAll);
+  const updateStatus = useMutation(api.orders.updateStatus);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesSearch = 
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const isLoading = orders === undefined;
+
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      await updateStatus({ id: orderId as Id<"orders">, status: newStatus });
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "delivered":
+        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      case "shipped":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "processing":
+      case "confirmed":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "cancelled":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      default:
+        return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+    }
+  };
+
+  const filteredOrders = (orders || []).filter((order) => {
+    const matchesSearch =
+      order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Orders</h1>
+          <p className="text-slate-400 mt-1">Loading orders...</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-8 animate-pulse border border-slate-700">
+          <div className="h-48 bg-slate-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Orders</h1>
-        <p className="text-[var(--text-secondary)] mt-1">
-          Manage and track customer orders
+        <h1 className="text-2xl font-bold text-white">Orders</h1>
+        <p className="text-slate-400 mt-1">
+          Manage and track customer orders ({(orders || []).length} total)
         </p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search orders..."
+            placeholder="Search by order ID or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
+            className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
           />
         </div>
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
-        >
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <Filter className="w-5 h-5 text-slate-400" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+          >
+            <option value="all">All Statuses</option>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-[var(--bg-secondary)] rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[var(--border-color)]">
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Order ID</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Customer</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Items</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Total</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Payment</th>
-                <th className="text-left p-4 text-sm font-medium text-[var(--text-secondary)]">Date</th>
-                <th className="text-right p-4 text-sm font-medium text-[var(--text-secondary)]">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-card)]">
-                  <td className="p-4">
-                    <span className="font-mono text-sm">{order.id}</span>
-                  </td>
-                  <td className="p-4">
-                    <div>
-                      <p className="font-medium">{order.customer}</p>
-                      <p className="text-sm text-[var(--text-secondary)]">{order.email}</p>
-                    </div>
-                  </td>
-                  <td className="p-4">{order.items}</td>
-                  <td className="p-4 font-medium">{formatPrice(order.total)}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status]}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${paymentStatusColors[order.paymentStatus]}`}>
-                      {order.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="p-4 text-[var(--text-secondary)]">{order.date}</td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="p-2 hover:bg-[var(--bg-card)] rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                      <div className="relative">
-                        <button className="p-2 hover:bg-[var(--bg-card)] rounded-lg transition-colors">
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredOrders.length === 0 && (
+      <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700">
+        {(orders || []).length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[var(--text-secondary)]">No orders found</p>
+            <Clock className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">No orders yet</p>
+            <p className="text-sm text-slate-500 mt-1">Orders will appear here when customers make purchases</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left p-4 text-sm font-medium text-slate-400">Order ID</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-400">Customer</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-400">Date</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-400">Status</th>
+                  <th className="text-right p-4 text-sm font-medium text-slate-400">Total</th>
+                  <th className="text-right p-4 text-sm font-medium text-slate-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map((order) => (
+                  <tr key={order._id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                    <td className="p-4">
+                      <p className="font-mono text-sm text-emerald-400">{order._id.substring(0, 8)}...</p>
+                    </td>
+                    <td className="p-4 text-white">{order.email}</td>
+                    <td className="p-4 text-slate-400">
+                      {new Date(order._creationTime).toISOString().split("T")[0]}
+                    </td>
+                    <td className="p-4">
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order._id, e.target.value as OrderStatus)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium bg-transparent border ${getStatusColor(order.status)} focus:outline-none cursor-pointer`}
+                      >
+                        {statusOptions.map((option) => (
+                          <option key={option.value} value={option.value} className="bg-slate-800 text-white">
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-4 text-right font-medium text-emerald-400">
+                      {formatPrice(order.total)}
+                    </td>
+                    <td className="p-4 text-right">
+                      <Link
+                        href={`/admin/orders/${order._id}`}
+                        className="p-2 hover:bg-slate-700 rounded-lg inline-flex"
+                      >
+                        <Eye className="w-4 h-4 text-slate-400 hover:text-white" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {(orders || []).length > 0 && filteredOrders.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-400">No orders match your filters</p>
           </div>
         )}
       </div>
