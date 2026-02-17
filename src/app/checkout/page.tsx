@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatPrice } from "@/lib/currency";
 import { getPaystackConfig } from "@/lib/paystack";
-import { createOrder } from "@/lib/orders";
 import { NIGERIAN_STATES, getShippingRate, ShippingAddress } from "@/types/order";
 import { usePaystackPayment } from "react-paystack";
 import { ShoppingBag, Truck, CreditCard, CheckCircle } from "lucide-react";
 import Image from "next/image";
+import { Id } from "@convex/_generated/dataModel";
 
 type CheckoutStep = "shipping" | "payment" | "confirmation";
 
@@ -20,6 +22,7 @@ export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
+  const createOrderMutation = useMutation(api.orders.create);
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
@@ -87,26 +90,34 @@ export default function CheckoutPage() {
     setOrderReference(reference.reference);
     setOrderError("");
 
-    // Save order to database
-    const result = await createOrder({
-      items,
-      shippingAddress,
-      subtotal,
-      shipping: shippingCost,
-      total,
-      paymentReference: reference.reference,
-      userId: user?.id,
-    });
+    try {
+      // Save order to Convex database
+      const orderId = await createOrderMutation({
+        items: items.map((item) => ({
+          productId: item.product._id as Id<"products">,
+          productName: item.product.name,
+          productPrice: item.product.price,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+        })),
+        shippingAddress,
+        subtotal,
+        shipping: shippingCost,
+        total,
+        paymentReference: reference.reference,
+        userId: user?.id,
+        email: shippingAddress.email,
+      });
 
-    if (result.success) {
       setOrderComplete(true);
       setCurrentStep("confirmation");
       clearCart();
-      console.log("Order created successfully:", result.order);
-    } else {
+      console.log("Order created successfully:", orderId);
+    } catch (error) {
       // Payment succeeded but order save failed - still show confirmation
       // but log the error for admin review
-      console.error("Order save failed:", result.error);
+      console.error("Order save failed:", error);
       setOrderError("Payment successful, but there was an issue saving your order. Please contact support with reference: " + reference.reference);
       setOrderComplete(true);
       setCurrentStep("confirmation");
