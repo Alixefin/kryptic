@@ -150,3 +150,19 @@ export const saveShippingAddress = mutation({
         }
     },
 });
+
+// Delete a user (admin only)
+export const deleteUser = mutation({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const currentUserId = await auth.getUserId(ctx);
+        if (!currentUserId) throw new Error("Not authenticated");
+
+        const currentUser = await ctx.db.get(currentUserId);
+        if (!currentUser || currentUser.role !== "admin") {
+            throw new Error("Not authorized");
+        }
+
+        await ctx.db.delete(args.userId);
+    },
+});

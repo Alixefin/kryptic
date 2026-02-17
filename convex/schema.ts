@@ -109,6 +109,14 @@ const schema = defineSchema({
         active: v.boolean(),
     }).index("by_order", ["order"]),
 
+    // Categories
+    categories: defineTable({
+        name: v.string(),
+        slug: v.string(),
+        description: v.optional(v.string()),
+        active: v.boolean(),
+    }).index("by_slug", ["slug"]),
+
     // Notifications
     notifications: defineTable({
         userId: v.optional(v.string()), // User ID or null for global/admin

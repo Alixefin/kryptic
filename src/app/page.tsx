@@ -35,7 +35,9 @@ function CategorySection({ categoryKey, title, href }: { categoryKey: string; ti
 export default function Home() {
   // Use one query to check if data is loaded
   const allProducts = useQuery(api.products.list);
-  const isLoading = allProducts === undefined;
+  const activeCategories = useQuery(api.categories.listActive);
+
+  const isLoading = allProducts === undefined || activeCategories === undefined;
 
   return (
     <main className="min-h-screen">
@@ -47,12 +49,12 @@ export default function Home() {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--accent)]" />
         </div>
       ) : (
-        categories.map((cat) => (
+        activeCategories?.map((cat) => (
           <CategorySection
-            key={cat.key}
-            categoryKey={cat.key}
-            title={cat.title}
-            href={cat.href}
+            key={cat._id}
+            categoryKey={cat.slug}
+            title={cat.name.toUpperCase()}
+            href={`/collections/${cat.slug}`}
           />
         ))
       )}

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Mail, Users, UserPlus } from "lucide-react";
-import { useQuery } from "convex/react";
+import { Search, Mail, Users, UserPlus, Trash2 } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 
 export default function AdminCustomersPage() {
   const customers = useQuery(api.users.listAll);
+  const deleteUser = useMutation(api.users.deleteUser);
   const [searchQuery, setSearchQuery] = useState("");
 
   const isLoading = customers === undefined;
@@ -126,9 +127,21 @@ export default function AdminCustomersPage() {
                         <a
                           href={`mailto:${customer.email}`}
                           className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                          title="Send Email"
                         >
                           <Mail className="w-4 h-4 text-slate-400 hover:text-white" />
                         </a>
+                        <button
+                          onClick={async () => {
+                            if (confirm("Are you sure you want to delete this user? This cannot be undone.")) {
+                              await deleteUser({ userId: customer._id });
+                            }
+                          }}
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors group"
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-red-400" />
+                        </button>
                       </div>
                     </td>
                   </tr>

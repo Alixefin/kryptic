@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, X, Package, DollarSign, Save, Trash2 } from "lucide-react";
@@ -9,18 +9,21 @@ import { api } from "@convex/_generated/api";
 import { formatPrice } from "@/lib/currency";
 import { Id } from "@convex/_generated/dataModel";
 
-const categories = ["shirts", "bottoms", "jackets", "t-shirts", "accessories"];
+// const categories = ["shirts", "bottoms", "jackets", "t-shirts", "accessories"];
 const availableSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 const availableColors = ["Black", "White", "Red", "Blue", "Green", "Navy", "Gray", "Brown", "Beige"];
 
-export default function EditProductPage({ params }: { params: { id: Id<"products"> } }) {
+export default function EditProductPage({ params }: { params: Promise<{ id: Id<"products"> }> }) {
     const router = useRouter();
-    const productId = params.id;
+    const { id: productId } = use(params);
 
     const product = useQuery(api.products.getById, { id: productId });
     const updateProduct = useMutation(api.products.update);
     const deleteProduct = useMutation(api.products.remove);
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+
+    const categoriesQuery = useQuery(api.categories.listAll);
+    const categories = categoriesQuery || [];
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -140,11 +143,18 @@ export default function EditProductPage({ params }: { params: { id: Id<"products
             }
 
             // Update product via Convex mutation
+            // Update product via Convex mutation
+            const price = parseFloat(formData.price);
+            const stock = parseInt(formData.stock);
+
+            if (isNaN(price)) throw new Error("Price must be a valid number");
+            if (isNaN(stock)) throw new Error("Stock must be a valid number");
+
             await updateProduct({
                 id: productId,
                 name: formData.name,
                 description: formData.description || undefined,
-                price: parseFloat(formData.price),
+                price: price,
                 originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
                 discount: formData.discount ? parseInt(formData.discount) : undefined,
                 category: formData.category,
@@ -152,7 +162,7 @@ export default function EditProductPage({ params }: { params: { id: Id<"products
                 hoverImageStorageId: hoverImageStorageId, // Will only be set if new image
                 sizes: formData.sizes.length > 0 ? formData.sizes : undefined,
                 colors: formData.colors.length > 0 ? formData.colors : undefined,
-                stock: parseInt(formData.stock),
+                stock: stock,
                 featured: formData.featured,
                 soldOut: formData.soldOut,
             });
@@ -256,7 +266,7 @@ export default function EditProductPage({ params }: { params: { id: Id<"products
                             >
                                 <option value="">Select a category</option>
                                 {categories.map((cat) => (
-                                    <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                                    <option key={cat._id} value={cat.slug}>{cat.name}</option>
                                 ))}
                             </select>
                         </div>

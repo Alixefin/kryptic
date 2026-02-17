@@ -12,13 +12,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 
-const collections = [
-  { name: "JACKETS", href: "/collections/jackets" },
-  { name: "T-SHIRTS", href: "/collections/t-shirts" },
-  { name: "SHIRTS", href: "/collections/shirts" },
-  { name: "BOTTOMS", href: "/collections/bottoms" },
-  { name: "ACCESSORIES", href: "/collections/accessories" },
-];
+// const collections = [
+//   { name: "JACKETS", href: "/collections/jackets" },
+//   { name: "T-SHIRTS", href: "/collections/t-shirts" },
+//   { name: "SHIRTS", href: "/collections/shirts" },
+//   { name: "BOTTOMS", href: "/collections/bottoms" },
+//   { name: "ACCESSORIES", href: "/collections/accessories" },
+// ];
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -40,6 +40,11 @@ export default function Header() {
   const notifications = useQuery(api.notifications.list);
   const markAllRead = useMutation(api.notifications.markAllRead);
   const unreadCount = notifications?.length || 0;
+
+  const activeCategories = useQuery(api.categories.listActive);
+  const collections = activeCategories
+    ? activeCategories.map(c => ({ name: c.name.toUpperCase(), href: `/collections/${c.slug}` }))
+    : [];
 
   const handleMarkAllRead = async () => {
     await markAllRead();

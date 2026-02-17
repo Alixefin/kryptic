@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, X, Package, DollarSign } from "lucide-react";
-import { useMutation } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { formatPrice } from "@/lib/currency";
 
-const categories = ["shirts", "bottoms", "jackets", "t-shirts", "accessories"];
+// const categories = ["shirts", "bottoms", "jackets", "t-shirts", "accessories"];
 const availableSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 const availableColors = ["Black", "White", "Red", "Blue", "Green", "Navy", "Gray", "Brown", "Beige"];
 
@@ -23,6 +23,9 @@ export default function AddProductPage() {
 
   const createProduct = useMutation(api.products.create);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+
+  const categoriesQuery = useQuery(api.categories.listAll);
+  const categories = categoriesQuery || [];
 
   const [formData, setFormData] = useState({
     name: "",
@@ -185,7 +188,7 @@ export default function AddProductPage() {
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                  <option key={cat._id} value={cat.slug}>{cat.name}</option>
                 ))}
               </select>
             </div>

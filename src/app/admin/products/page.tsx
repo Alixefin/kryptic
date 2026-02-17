@@ -15,9 +15,10 @@ export default function AdminProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const categories = ["all", "shirts", "bottoms", "jackets", "t-shirts", "accessories"];
+  const categoriesQuery = useQuery(api.categories.listAll);
+  const categories = categoriesQuery || [];
 
-  const isLoading = products === undefined;
+  const isLoading = products === undefined || categoriesQuery === undefined;
 
   async function handleDelete(productId: string) {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -73,9 +74,10 @@ export default function AdminProductsPage() {
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
         >
+          <option value="all" className="bg-slate-800">All Categories</option>
           {categories.map((category) => (
-            <option key={category} value={category} className="bg-slate-800">
-              {category.charAt(0).toUpperCase() + category.slice(1)}
+            <option key={category._id} value={category.slug} className="bg-slate-800">
+              {category.name}
             </option>
           ))}
         </select>
