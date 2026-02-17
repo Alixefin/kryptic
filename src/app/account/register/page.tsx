@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
@@ -11,11 +11,14 @@ import Link from "next/link";
 type Step = "register" | "verify" | "success";
 
 export default function RegisterPage() {
-  const [step, setStep] = useState<Step>("register");
+  const searchParams = useSearchParams();
+  const verifyEmail = searchParams.get("verify");
+
+  const [step, setStep] = useState<Step>(verifyEmail ? "verify" : "register");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: verifyEmail || "",
     phone: "",
     password: "",
     confirmPassword: "",
@@ -30,7 +33,7 @@ export default function RegisterPage() {
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(verifyEmail ? 60 : 0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 

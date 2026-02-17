@@ -14,19 +14,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user, isLoading, isAdmin } = useAuth();
+  const { login, user, isLoading, isAdmin, isEmailPendingVerification, sendOTP, logout } = useAuth();
   const router = useRouter();
 
   // After login succeeds and user data loads, redirect based on role
   useEffect(() => {
     if (!isLoading && user) {
+      if (isEmailPendingVerification) {
+        // User logged in but email not verified — send OTP and redirect to verify
+        sendOTP(user.email).then(() => {
+          router.push(`/account/register?verify=${encodeURIComponent(user.email)}`);
+        });
+        return;
+      }
       if (isAdmin) {
         router.push("/admin");
       } else {
         router.push("/");
       }
     }
-  }, [user, isLoading, isAdmin, router]);
+  }, [user, isLoading, isAdmin, isEmailPendingVerification, sendOTP, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

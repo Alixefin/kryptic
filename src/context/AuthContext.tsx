@@ -13,12 +13,14 @@ export interface User {
   phone?: string;
   role: "user" | "admin";
   createdAt: string;
+  emailVerified: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isEmailPendingVerification: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
@@ -55,12 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone: convexUser.phone || undefined,
       role: (convexUser.role as "user" | "admin") || "user",
       createdAt: new Date(convexUser._creationTime).toISOString(),
+      emailVerified: !!convexUser.emailVerificationTime,
     }
     : null;
 
   // Loading: convexUser is undefined (not yet loaded) vs null (not authenticated)
   const isLoading = convexUser === undefined;
-  const isAuthenticated = !!user;
+  // User is only fully authenticated if their email is verified
+  const isAuthenticated = !!user && user.emailVerified;
+  // True when user has a session but hasn't verified their email yet
+  const isEmailPendingVerification = !!user && !user.emailVerified;
   const isAdmin = user?.role === "admin";
 
   const login = useCallback(
@@ -170,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         isAuthenticated,
+        isEmailPendingVerification,
         isAdmin,
         login,
         register,
