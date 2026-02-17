@@ -323,17 +323,27 @@ function RegisterContent() {
                   </button>
 
                   <div>
-                    <button
-                      onClick={() => {
-                        setStep("register");
-                        setOtpValues(["", "", "", "", "", ""]);
-                        setError("");
-                      }}
-                      className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
-                    >
-                      <ArrowLeft className="w-3 h-3" />
-                      Back to registration
-                    </button>
+                    {verifyEmail ? (
+                      <Link
+                        href="/account/login"
+                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
+                      >
+                        <ArrowLeft className="w-3 h-3" />
+                        Back to Sign In
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setStep("register");
+                          setOtpValues(["", "", "", "", "", ""]);
+                          setError("");
+                        }}
+                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
+                      >
+                        <ArrowLeft className="w-3 h-3" />
+                        Back to registration
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

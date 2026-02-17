@@ -243,10 +243,22 @@ export default function AddProductPage() {
                   type="number"
                   min="0"
                   value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                  onChange={(e) => {
+                    const stockVal = e.target.value;
+                    setFormData({
+                      ...formData,
+                      stock: stockVal,
+                      soldOut: parseInt(stockVal) === 0,
+                    });
+                  }}
                   className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
                   placeholder="50"
                 />
+                {parseInt(formData.stock) === 0 && (
+                  <p className="text-xs text-[var(--sale-red)] mt-1">
+                    This product will be automatically marked as &quot;Out of Stock&quot;
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -379,14 +391,14 @@ export default function AddProductPage() {
               <span>Featured Product</span>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-not-allowed opacity-60">
               <input
                 type="checkbox"
                 checked={formData.soldOut}
-                onChange={(e) => setFormData({ ...formData, soldOut: e.target.checked })}
+                disabled
                 className="w-5 h-5 accent-[var(--accent)]"
               />
-              <span>Sold Out</span>
+              <span>Out of Stock {formData.soldOut ? "(auto — stock is 0)" : "(set stock to 0 to enable)"}</span>
             </label>
           </div>
 

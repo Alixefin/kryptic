@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -23,6 +23,9 @@ export default function CheckoutContent() {
     const { user, isAuthenticated } = useAuth();
     const router = useRouter();
     const createOrderMutation = useMutation(api.orders.create);
+    const savedAddress = useQuery(api.users.getShippingAddress);
+    const saveShippingAddress = useMutation(api.users.saveShippingAddress);
+    const [addressLoaded, setAddressLoaded] = useState(false);
 
     const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
     const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
@@ -45,9 +48,24 @@ export default function CheckoutContent() {
     const shippingCost = shippingAddress.state ? getShippingRate(shippingAddress.state) : 0;
     const total = subtotal + shippingCost;
 
-    // Update shipping address when user data is available
+    // Auto-fill from saved shipping address, or fall back to user profile data
     useEffect(() => {
-        if (user) {
+        if (addressLoaded) return;
+        if (savedAddress) {
+            setShippingAddress({
+                firstName: savedAddress.firstName,
+                lastName: savedAddress.lastName,
+                email: savedAddress.email,
+                phone: savedAddress.phone,
+                street: savedAddress.street,
+                city: savedAddress.city,
+                state: savedAddress.state,
+                country: savedAddress.country,
+                postalCode: savedAddress.postalCode || "",
+            });
+            setAddressLoaded(true);
+        } else if (savedAddress === null && user) {
+            // No saved address — pre-fill from user profile
             setShippingAddress(prev => ({
                 ...prev,
                 firstName: user.firstName || prev.firstName,
@@ -55,8 +73,9 @@ export default function CheckoutContent() {
                 email: user.email || prev.email,
                 phone: user.phone || prev.phone,
             }));
+            setAddressLoaded(true);
         }
-    }, [user]);
+    }, [savedAddress, user, addressLoaded]);
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -72,8 +91,26 @@ export default function CheckoutContent() {
         }));
     };
 
-    const handleShippingSubmit = (e: React.FormEvent) => {
+    const handleShippingSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Auto-save shipping address for authenticated users
+        if (isAuthenticated) {
+            try {
+                await saveShippingAddress({
+                    firstName: shippingAddress.firstName,
+                    lastName: shippingAddress.lastName,
+                    email: shippingAddress.email,
+                    phone: shippingAddress.phone,
+                    street: shippingAddress.street,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    country: shippingAddress.country,
+                    postalCode: shippingAddress.postalCode || undefined,
+                });
+            } catch (err) {
+                console.error("Failed to save shipping address:", err);
+            }
+        }
         setCurrentStep("payment");
     };
 

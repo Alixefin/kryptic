@@ -94,3 +94,59 @@ export const promoteToAdmin = mutation({
         return { success: true, userId: user._id, email: args.email };
     },
 });
+
+// Get the default shipping address for the authenticated user
+export const getShippingAddress = query({
+    args: {},
+    handler: async (ctx) => {
+        const userId = await auth.getUserId(ctx);
+        if (!userId) return null;
+
+        const address = await ctx.db
+            .query("shippingAddresses")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .first();
+
+        return address;
+    },
+});
+
+// Save (upsert) the user's default shipping address
+export const saveShippingAddress = mutation({
+    args: {
+        firstName: v.string(),
+        lastName: v.string(),
+        email: v.string(),
+        phone: v.string(),
+        street: v.string(),
+        city: v.string(),
+        state: v.string(),
+        country: v.string(),
+        postalCode: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const userId = await auth.getUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        // Check if user already has a saved address
+        const existing = await ctx.db
+            .query("shippingAddresses")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .first();
+
+        if (existing) {
+            // Update existing address
+            await ctx.db.patch(existing._id, {
+                ...args,
+                isDefault: true,
+            });
+        } else {
+            // Create new address
+            await ctx.db.insert("shippingAddresses", {
+                userId,
+                ...args,
+                isDefault: true,
+            });
+        }
+    },
+});

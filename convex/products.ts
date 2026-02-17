@@ -73,6 +73,9 @@ export const create = mutation({
                 (await ctx.storage.getUrl(args.hoverImageStorageId)) ?? undefined;
         }
 
+        // Auto-set soldOut when stock is 0
+        const soldOut = args.stock === 0 ? true : args.soldOut;
+
         return await ctx.db.insert("products", {
             name: args.name,
             description: args.description,
@@ -87,7 +90,7 @@ export const create = mutation({
             sizes: args.sizes,
             colors: args.colors,
             stock: args.stock,
-            soldOut: args.soldOut,
+            soldOut,
             featured: args.featured,
         });
     },
@@ -124,6 +127,11 @@ export const update = mutation({
         if (updates.hoverImageStorageId) {
             updates.hoverImageUrl =
                 (await ctx.storage.getUrl(updates.hoverImageStorageId)) ?? undefined;
+        }
+
+        // Auto-set soldOut when stock is updated to 0
+        if (updates.stock !== undefined) {
+            updates.soldOut = updates.stock === 0;
         }
 
         // Filter out undefined values

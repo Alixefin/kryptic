@@ -81,6 +81,21 @@ const schema = defineSchema({
         expiresAt: v.number(),
         used: v.boolean(),
     }).index("by_email", ["email"]),
+
+    // Saved shipping addresses
+    shippingAddresses: defineTable({
+        userId: v.id("users"),
+        firstName: v.string(),
+        lastName: v.string(),
+        email: v.string(),
+        phone: v.string(),
+        street: v.string(),
+        city: v.string(),
+        state: v.string(),
+        country: v.string(),
+        postalCode: v.optional(v.string()),
+        isDefault: v.boolean(),
+    }).index("by_userId", ["userId"]),
 });
 
 export default schema;

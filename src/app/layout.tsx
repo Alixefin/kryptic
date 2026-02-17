@@ -3,7 +3,7 @@ import "./globals.css";
 import ClientBody from "./ClientBody";
 
 export const metadata: Metadata = {
-  title: "KRYPTIC - Luxury Fashion",
+  title: "KRYPTIC LAB",
   description: "Kryptic redefines elegance with premium T-shirts, shirts, sunglasses, and fashion accessories. Where modern fashion meets timeless design.",
   icons: {
     icon: "/images/hero/logo.png",

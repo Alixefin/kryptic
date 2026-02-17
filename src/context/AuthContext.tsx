@@ -79,12 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await signIn("password", formData);
         return { success: true };
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Login failed. Please try again.";
+        const raw = error instanceof Error ? error.message : "";
+        let message: string;
+        if (/InvalidSecret|invalid.*password|incorrect/i.test(raw)) {
+          message = "Incorrect password. Please try again.";
+        } else if (/Could not find|not found|no user|no account/i.test(raw)) {
+          message = "No account found with this email. Please sign up first.";
+        } else if (/too many|rate.?limit/i.test(raw)) {
+          message = "Too many login attempts. Please wait a moment and try again.";
+        } else {
+          message = "Login failed. Please check your email and password.";
+        }
         return { success: false, error: message };
       }
     },
     [signIn]
   );
+
 
   const register = useCallback(
     async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
