@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,7 +10,7 @@ import Link from "next/link";
 
 type Step = "register" | "verify" | "success";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const searchParams = useSearchParams();
   const verifyEmail = searchParams.get("verify");
 
@@ -500,5 +500,17 @@ export default function RegisterPage() {
 
       <Footer />
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+      </main>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }
