@@ -17,7 +17,10 @@ import {
   ExternalLink,
   Bell,
   Search,
+  Check,
 } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
@@ -36,9 +39,19 @@ export default function AdminLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading, isAdmin, logout } = useAuth();
+
+  const notifications = useQuery(api.notifications.listAdmin);
+  const markAllRead = useMutation(api.notifications.markAllRead);
+  const unreadCount = notifications?.length || 0;
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+    setIsNotificationsOpen(false);
+  };
 
   // Skip auth check for login page
   const isLoginPage = pathname === "/admin/login";
@@ -200,10 +213,62 @@ export default function AdminLayout({
 
             <div className="flex items-center gap-3">
               {/* Notifications */}
-              <button className="relative p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="relative p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-secondary)]"></span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                      <h3 className="font-semibold text-sm text-white">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" /> Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {unreadCount === 0 ? (
+                        <div className="p-8 text-center text-slate-500">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No new notifications</p>
+                        </div>
+                      ) : (
+                        notifications?.map((notif) => (
+                          <Link
+                            href={notif.link || "/admin/orders"}
+                            key={notif._id}
+                            onClick={() => setIsNotificationsOpen(false)}
+                            className="block p-4 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-0"
+                          >
+                            <div className="flex gap-3">
+                              <div className="w-2 h-2 mt-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-white">{notif.title}</p>
+                                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{notif.message}</p>
+                                <p className="text-[10px] text-slate-500 mt-2 opacity-70">
+                                  {new Date(notif._creationTime).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User profile */}
               <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700">

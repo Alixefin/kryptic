@@ -4,10 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ChevronDown, User, ShoppingBag, Menu, X } from "lucide-react";
+import { ChevronDown, User, ShoppingBag, Menu, X, Bell, Check } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useCart } from "@/context/CartContext";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 
 const collections = [
   { name: "JACKETS", href: "/collections/jackets" },
@@ -27,10 +30,21 @@ const navLinks = [
 export default function Header() {
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { toggleCart, getItemCount } = useCart();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const pathname = usePathname();
   const itemCount = getItemCount();
+
+  const notifications = useQuery(api.notifications.list);
+  const markAllRead = useMutation(api.notifications.markAllRead);
+  const unreadCount = notifications?.length || 0;
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+    setIsNotificationsOpen(false);
+  };
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -115,6 +129,65 @@ export default function Header() {
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
             <ThemeToggle />
+
+            {/* Notifications */}
+            {user && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors relative text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-primary)]"></span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]">
+                      <h3 className="font-semibold text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-xs text-[var(--accent)] hover:text-emerald-400 flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" /> Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {unreadCount === 0 ? (
+                        <div className="p-8 text-center text-[var(--text-secondary)]">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No new notifications</p>
+                        </div>
+                      ) : (
+                        notifications?.map((notif) => (
+                          <Link
+                            href={notif.link || "/account/orders"}
+                            key={notif._id}
+                            onClick={() => setIsNotificationsOpen(false)}
+                            className="block p-4 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-color)] last:border-0"
+                          >
+                            <div className="flex gap-3">
+                              <div className="w-2 h-2 mt-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium">{notif.title}</p>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2">{notif.message}</p>
+                                <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-70">
+                                  {new Date(notif._creationTime).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Link href="/account" className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors">
               <User className="h-5 w-5" />

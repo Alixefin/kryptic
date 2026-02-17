@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Store, Bell, Lock, Palette } from "lucide-react";
+import Link from "next/link";
+import { Save, Store, Bell, Lock, Palette, Layout } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
@@ -43,6 +44,7 @@ export default function AdminSettingsPage() {
     { id: "general", name: "General", icon: Store },
     { id: "notifications", name: "Notifications", icon: Bell },
     { id: "shipping", name: "Shipping", icon: Store },
+    { id: "homepage", name: "Homepage", icon: Layout },
   ];
 
   return (
@@ -62,8 +64,8 @@ export default function AdminSettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${activeTab === tab.id
-                  ? "bg-[var(--accent)] text-white"
-                  : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)]"
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)]"
                 }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -242,6 +244,25 @@ export default function AdminSettingsPage() {
                     min="0"
                     className="w-full max-w-xs px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:border-[var(--accent)]"
                   />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "homepage" && (
+              <div className="bg-[var(--bg-secondary)] p-6 rounded-lg space-y-6">
+                <h2 className="text-xl font-bold">Homepage Settings</h2>
+
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-white">Hero Carousel</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">Manage the sliding images and text on the homepage</p>
+                  </div>
+                  <Link
+                    href="/admin/settings/hero"
+                    className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-emerald-400 transition-colors"
+                  >
+                    Manage Slides
+                  </Link>
                 </div>
               </div>
             )}

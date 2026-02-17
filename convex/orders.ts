@@ -69,6 +69,36 @@ export const create = mutation({
             itemCount: args.items.length,
         });
 
+        // Send customer email confirmation
+        await ctx.scheduler.runAfter(0, internal.emails.sendOrderConfirmation, {
+            orderId: orderId as string,
+            customerEmail: args.email,
+            customerName: args.shippingAddress.firstName,
+            total: args.total,
+            orderUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/orders/${orderId}`,
+        });
+
+        // Notify Admin (System Notification)
+        await ctx.scheduler.runAfter(0, internal.notifications.create, {
+            type: "order",
+            title: "New Order Received",
+            message: `Order #${(orderId as string).substring(0, 8)} from ${args.shippingAddress.firstName} - ${args.items.length} items`,
+            link: `/admin/orders/${orderId}`,
+            recipient: "admin",
+        });
+
+        // Notify User (System Notification)
+        if (args.userId) {
+            await ctx.scheduler.runAfter(0, internal.notifications.create, {
+                userId: args.userId,
+                type: "order",
+                title: "Order Confirmed",
+                message: `Your order #${(orderId as string).substring(0, 8)} has been placed successfully.`,
+                link: `/account/orders/${orderId}`,
+                recipient: "user",
+            });
+        }
+
         return orderId;
     },
 });

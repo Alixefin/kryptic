@@ -11,7 +11,9 @@
 import type * as auth from "../auth.js";
 import type * as emails from "../emails.js";
 import type * as files from "../files.js";
+import type * as hero from "../hero.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
 import type * as otp from "../otp.js";
 import type * as products from "../products.js";
@@ -27,7 +29,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   emails: typeof emails;
   files: typeof files;
+  hero: typeof hero;
   http: typeof http;
+  notifications: typeof notifications;
   orders: typeof orders;
   otp: typeof otp;
   products: typeof products;

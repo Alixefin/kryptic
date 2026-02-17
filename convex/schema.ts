@@ -96,6 +96,31 @@ const schema = defineSchema({
         postalCode: v.optional(v.string()),
         isDefault: v.boolean(),
     }).index("by_userId", ["userId"]),
+
+    // Homepage Hero Slides
+    heroSlides: defineTable({
+        title: v.string(),
+        subtitle: v.string(),
+        imageStorageId: v.id("_storage"),
+        imageUrl: v.optional(v.string()), // cached URL
+        ctaLink: v.string(),
+        ctaText: v.string(),
+        order: v.number(),
+        active: v.boolean(),
+    }).index("by_order", ["order"]),
+
+    // Notifications
+    notifications: defineTable({
+        userId: v.optional(v.string()), // User ID or null for global/admin
+        type: v.string(), // "order", "system", etc.
+        title: v.string(),
+        message: v.string(),
+        link: v.optional(v.string()),
+        read: v.boolean(),
+        recipient: v.string(), // "user" or "admin"
+    })
+        .index("by_user", ["userId"])
+        .index("by_recipient", ["recipient", "read"]), // For fetching unread admin notifs
 });
 
 export default schema;
