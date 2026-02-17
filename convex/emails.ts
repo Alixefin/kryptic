@@ -12,7 +12,7 @@ export const sendOTP = internalAction({
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
-      from: "KRYPTIC <onboarding@resend.dev>",
+      from: "KRYPTIC <noreply@krypticlab.com>",
       to: args.email,
       subject: "Your KRYPTIC Verification Code",
       html: `
@@ -57,7 +57,7 @@ export const sendOrderNotification = internalAction({
     }).format(args.total);
 
     await resend.emails.send({
-      from: "KRYPTIC Orders <onboarding@resend.dev>",
+      from: "KRYPTIC Orders <noreply@krypticlab.com>",
       to: adminEmail,
       subject: `🛒 New Order - ${formattedTotal} from ${args.customerName}`,
       html: `
